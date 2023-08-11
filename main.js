@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 let data = [];
 let unsplit = [];
-let remov_stop_words = false;
+let remov_stop_words = true;
 let stemType = "lemm";
 let invertedIndex = {};
 
@@ -20,7 +20,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     data=[]
     unsplit=[]
     const file = req.file;
-    //remov_stop_words = req.body.removeStopWords;
+    remov_stop_words = req.body.removeStopWords=="true";
     stemType = req.body.stemType;
 
     if (!file) {
@@ -65,6 +65,8 @@ app.post('/query', (req, res) => {
     const ans = insertQuery(query, invertedIndex);
     let tempQuery = removePunctuation(query);
     tempQuery = splitDocs(tempQuery);
+    if(ans.length<=0)
+    return res.status(200).json(ans);
     const result = getDocumentContent(calcScore(ans, calcQuery));
     return res.status(200).json(result);
 });
@@ -206,7 +208,9 @@ function insertQuery(query, invertedIndex) {
     console.log("quert terms", query);
     if (remov_stop_words){
         query = removeStopWords(query);
-        console.log(query);}
+        }
+    if(query.length<=0) 
+    return [];
     if (stemType != "none")
         query = preparerQueryUsingLimmatization(query);
 
