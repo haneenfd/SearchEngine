@@ -3,7 +3,7 @@ const path = require('path');
 const xlsx = require('xlsx');
 const natural = require('natural');
 const multer = require('multer');
-const { type } = require('os');
+
 const upload = multer({ dest: '../uploads/' });
 const app = express();
 const port = 3000;
@@ -12,13 +12,15 @@ app.use(express.urlencoded({ extended: true }));
 
 let data = [];
 let unsplit = [];
-let remov_stop_words = true;
+let remov_stop_words = false;
 let stemType = "lemm";
 let invertedIndex = {};
 
 app.post('/upload', upload.single('file'), (req, res) => {
+    data=[]
+    unsplit=[]
     const file = req.file;
-    remov_stop_words = req.body.removeStopWords;
+    //remov_stop_words = req.body.removeStopWords;
     stemType = req.body.stemType;
 
     if (!file) {
@@ -201,12 +203,15 @@ function stemWord(word) {
 function insertQuery(query, invertedIndex) {
     query = removePunctuationforQuery(query);
     query = customSplit(query);
-    if (remov_stop_words)
+    console.log("quert terms", query);
+    if (remov_stop_words){
         query = removeStopWords(query);
+        console.log(query);}
     if (stemType != "none")
         query = preparerQueryUsingLimmatization(query);
-    console.log(query);
+
     return searchResults(query, invertedIndex)
+
 
 }
 
@@ -263,6 +268,7 @@ function searchResults(queryTerms, invertedIndex) {
             queryTerms[i] = findPhraseQueryResults(queryTerms[i], invertedIndex);
         else if (queryTerms[i] != "and" && queryTerms[i] != "or") {
             queryTerms[i] = Array.from(invertedIndex[queryTerms[i]]?.keys() || []);
+            
         }
     }
     let result = [...queryTerms[0]];
